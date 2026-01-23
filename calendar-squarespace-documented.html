@@ -1,0 +1,1292 @@
+<!-- 
+================================================================================
+MOTORCYCLE TRACK DAY CALENDAR - SQUARESPACE EMBED
+================================================================================
+
+DESCRIPTION:
+    Interactive calendar displaying motorcycle track day events for 2026.
+    Features a monthly calendar grid view and an events list below.
+    Clicking on event days opens a booking popup modal.
+
+AUTHOR: Jorge Luis Maya, mayaibuki.com
+LAST UPDATED: January 23, 2026
+VERSION: 2.3
+
+================================================================================
+SQUARESPACE EMBEDDING INSTRUCTIONS:
+================================================================================
+
+1. ADD GOOGLE FONTS (one-time setup):
+   - Go to Design > Custom CSS in Squarespace
+   - Add this line at the top:
+   @import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+2. ADD THE CALENDAR TO YOUR PAGE:
+   - Edit the page where you want the calendar
+   - Add a Code Block
+   - Paste this entire code into the Code Block
+   - Save and publish
+
+================================================================================
+RESPONSIVE BREAKPOINTS:
+================================================================================
+
+- Desktop (> 768px): Full layout with text in calendar cells
+- Tablet (768px): Reduced padding and font sizes
+- Mobile (< 400px): Calendar cells show track images instead of text
+- Landscape mode (< 600px height): Compact header
+
+================================================================================
+FILE STRUCTURE:
+================================================================================
+
+1. STYLES (<style> tag)
+   - Base styles and CSS reset
+   - Calendar header styles
+   - Calendar grid and day cell styles
+   - Events list styles
+   - Popup modal styles
+   - Responsive media queries
+
+2. HTML STRUCTURE
+   - Calendar container (#race-calendar)
+   - Calendar header with navigation
+   - Calendar grid
+   - Events list section
+   - Popup modal
+
+3. JAVASCRIPT
+   - Data objects (events, URLs, images, abbreviations)
+   - State variables
+   - Helper functions
+   - Render functions
+   - Event listeners
+
+================================================================================
+-->
+
+<style>
+    /* ==========================================================================
+       CSS RESET & BASE STYLES
+       ========================================================================== 
+       Scoped reset ensures calendar styles don't conflict with Squarespace theme.
+       All styles are prefixed with #race-calendar for isolation.
+    */
+    #race-calendar * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Main container - centers the calendar with max width */
+    #race-calendar {
+        font-family: 'Poppins', sans-serif;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(10px, 2vw, 40px); /* Responsive padding: min 10px, scales with viewport, max 40px */
+    }
+
+    /* ==========================================================================
+       CALENDAR HEADER STYLES
+       ========================================================================== 
+       Contains: Previous button | Month Title | Next button
+    */
+    #race-calendar .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: clamp(15px, 3vh, 40px);
+    }
+
+    /* Month title (e.g., "March") - clickable to return to current month */
+    #race-calendar .calendar-header h2 {
+        font-family: 'Epilogue', sans-serif;
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        font-weight: 800;
+        font-style: italic;
+        color: #1a1a1a;
+        margin: 0;
+        cursor: pointer;
+        transition: opacity 0.3s;
+    }
+
+    #race-calendar .calendar-header h2:hover {
+        opacity: 0.6;
+    }
+
+    /* Navigation arrows (← →) for changing months */
+    #race-calendar .nav-button {
+        background: none;
+        border: none;
+        font-size: clamp(2rem, 5vw, 3rem);
+        cursor: pointer;
+        color: #1a1a1a;
+        padding: clamp(5px, 1vw, 10px) clamp(10px, 2vw, 20px);
+        transition: opacity 0.3s;
+        line-height: 1;
+        font-weight: 300;
+    }
+
+    #race-calendar .nav-button:hover {
+        opacity: 0.6;
+    }
+
+    /* Disabled state when at calendar boundaries (Jan or Dec 2026) */
+    #race-calendar .nav-button:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+    }
+
+    /* ==========================================================================
+       CALENDAR GRID STYLES
+       ========================================================================== 
+       7-column grid for days of the week (Monday-Sunday)
+    */
+    #race-calendar .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: clamp(4px, 0.8vw, 8px);
+    }
+
+    /* Day of week headers (MO, TU, WE, TH, FR, SA, SU) */
+    #race-calendar .day-header {
+        text-align: center;
+        font-weight: 500;
+        color: #666;
+        padding: clamp(8px, 1.5vh, 15px);
+        font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ==========================================================================
+       DAY CELL STYLES
+       ========================================================================== 
+       Individual day cells in the calendar grid.
+       States: default, has-event, other-month, today
+    */
+    
+    /* Base day cell - light gray background, square aspect ratio */
+    #race-calendar .day-cell {
+        background: rgba(0, 0, 0, 0.05);
+        aspect-ratio: 1 / 1;
+        padding: clamp(6px, 1.2vw, 12px);
+        position: relative;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        cursor: default;
+    }
+
+    /* Day cell WITH an event - black background, white text, clickable */
+    #race-calendar .day-cell.has-event {
+        cursor: pointer;
+        background: #000000;
+        color: #FFFFFF;
+        opacity: 1;
+    }
+
+    #race-calendar .day-cell.has-event .day-number {
+        color: #FFFFFF;
+    }
+
+    #race-calendar .day-cell.has-event .event {
+        color: #FFFFFF;
+    }
+
+    /* Organizer name in bold within event cells */
+    #race-calendar .day-cell.has-event .event.organizer {
+        font-weight: 700;
+    }
+
+    /* Hover effect for event cells - slight scale and lighter background */
+    #race-calendar .day-cell.has-event:hover {
+        background: #1a1a1a;
+        transform: scale(1.02);
+    }
+
+    /* Days from previous/next month shown in current view - faded */
+    #race-calendar .day-cell.other-month {
+        opacity: 0.4;
+    }
+
+    /* Other-month cells with events should not be faded */
+    #race-calendar .day-cell.other-month.has-event {
+        opacity: 1;
+    }
+
+    /* Today's date highlighting */
+    #race-calendar .day-cell.today {
+        background: rgba(0, 0, 0, 0.15);
+        font-weight: 600;
+    }
+
+    #race-calendar .day-cell.today.has-event {
+        background: #000000;
+    }
+
+    /* Day number (1-31) in each cell */
+    #race-calendar .day-number {
+        font-size: clamp(0.8rem, 1.8vw, 1rem);
+        color: #1a1a1a;
+        margin-bottom: clamp(4px, 0.8vh, 8px);
+        font-weight: 400;
+        flex-shrink: 0;
+    }
+
+    #race-calendar .day-cell.today .day-number {
+        font-weight: 600;
+    }
+
+    /* Event text (track name, organizer) in day cells */
+    #race-calendar .event {
+        font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+        color: #1a1a1a;
+        margin-top: clamp(2px, 0.4vh, 3px);
+        line-height: 1.3;
+        font-weight: 400;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ==========================================================================
+       DAY CELL TRACK IMAGE (Mobile Only)
+       ========================================================================== 
+       On mobile (< 400px), event cells show track circuit images instead of text.
+       Hidden by default, shown via media query.
+    */
+    #race-calendar .day-cell-image {
+        display: none; /* Hidden by default, shown in mobile media query */
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 15%; /* Creates margin around the track image */
+    }
+
+    /* ==========================================================================
+       EVENTS LIST SECTION STYLES
+       ========================================================================== 
+       List of upcoming events shown below the calendar grid.
+       Each event shows: thumbnail | date, track, organizer | Book button
+    */
+    #race-calendar .upcoming-events {
+        margin-top: clamp(30px, 5vh, 60px);
+    }
+
+    #race-calendar .events-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Individual event row */
+    #race-calendar .event-item {
+        display: flex;
+        align-items: center;
+        padding: clamp(15px, 2.5vh, 25px) 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        gap: clamp(12px, 2.5vw, 20px);
+    }
+
+    #race-calendar .event-item:last-child {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Track circuit thumbnail image */
+    #race-calendar .event-thumbnail {
+        width: clamp(50px, 10vw, 80px);
+        height: clamp(50px, 10vw, 80px);
+        background: #1a1a1a;
+        flex-shrink: 0;
+        object-fit: cover;
+    }
+
+    /* Event details container (date, track name, organizer) */
+    #race-calendar .event-details {
+        flex: 1;
+        min-width: 0; /* Allows text truncation to work */
+    }
+
+    /* Event date range (e.g., "February 28 - March 1, 2026") */
+    #race-calendar .event-date {
+        font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+        color: #666;
+        margin-bottom: clamp(4px, 0.8vh, 8px);
+        font-weight: 400;
+    }
+
+    /* Track name (e.g., "Thunderhill Raceway East") */
+    #race-calendar .event-track {
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: clamp(2px, 0.5vh, 6px);
+    }
+
+    /* Organizer name (e.g., "Fun Track Dayz") */
+    #race-calendar .event-organizer {
+        font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+        color: #666;
+        font-weight: 400;
+    }
+
+    /* Book button - pill-shaped, black background */
+    #race-calendar .event-book-btn {
+        background: #1a1a1a;
+        color: white;
+        border: none;
+        padding: clamp(10px, 1.5vh, 14px) clamp(24px, 4vw, 36px);
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 50px; /* Pill shape */
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-left: auto; /* Pushes button to right side */
+    }
+
+    #race-calendar .event-book-btn:hover {
+        background: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Message shown when no events in current month view */
+    #race-calendar .no-events {
+        text-align: center;
+        padding: clamp(30px, 5vh, 50px) 0;
+        color: #666;
+        font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+
+    /* ==========================================================================
+       POPUP MODAL STYLES
+       ========================================================================== 
+       Modal dialog that appears when clicking on an event day.
+       Asks user if they want to book transportation.
+    */
+    
+    /* Dark overlay behind the popup */
+    #race-calendar .popup-overlay {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    /* Show popup when .active class is added */
+    #race-calendar .popup-overlay.active {
+        display: flex;
+    }
+
+    /* Popup content box - white background, centered */
+    #race-calendar .popup-content {
+        background: white;
+        padding: clamp(20px, 5vw, 40px);
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+
+    /* Popup title "Book Transportation?" */
+    #race-calendar .popup-content h3 {
+        font-family: 'Epilogue', sans-serif;
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0 0 15px 0;
+    }
+
+    /* Popup message text */
+    #race-calendar .popup-content p {
+        font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+        color: #666;
+        margin: 0 0 25px 0;
+        line-height: 1.5;
+    }
+
+    /* Button container - stacked on mobile, side-by-side on desktop */
+    #race-calendar .popup-buttons {
+        display: flex;
+        gap: 15px;
+        flex-direction: column-reverse; /* Mobile: Yes on top, Not now below */
+    }
+
+    /* Base button styles - pill-shaped */
+    #race-calendar .popup-button {
+        padding: clamp(12px, 2vw, 16px) clamp(20px, 4vw, 32px);
+        border: none;
+        border-radius: 50px; /* Pill shape */
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(0.9rem, 2vw, 1rem);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex: 1;
+    }
+
+    /* Primary button (Yes) - solid black background */
+    #race-calendar .popup-button.primary {
+        background: #1a1a1a;
+        color: white;
+    }
+
+    #race-calendar .popup-button.primary:hover {
+        background: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Secondary button (Not now) - white with black border */
+    #race-calendar .popup-button.secondary {
+        background: #ffffff;
+        color: #1a1a1a;
+        border: 2px solid #1a1a1a;
+    }
+
+    #race-calendar .popup-button.secondary:hover {
+        background: #f5f5f5;
+    }
+
+    /* ==========================================================================
+       RESPONSIVE MEDIA QUERIES
+       ========================================================================== */
+
+    /* TABLET BREAKPOINT (768px and below)
+       - Reduced padding and spacing
+       - Smaller fonts */
+    @media (max-width: 768px) {
+        #race-calendar {
+            padding: 10px;
+        }
+
+        #race-calendar .calendar-grid {
+            gap: 4px;
+        }
+        
+        #race-calendar .day-cell {
+            padding: 6px;
+        }
+        
+        #race-calendar .event {
+            font-size: 0.55rem;
+            line-height: 1.2;
+        }
+        
+        #race-calendar .day-number {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        
+        #race-calendar .day-header {
+            padding: 6px;
+            font-size: 0.65rem;
+        }
+
+        #race-calendar .event-thumbnail {
+            width: 50px;
+            height: 50px;
+        }
+
+        #race-calendar .event-book-btn {
+            padding: 8px 20px;
+        }
+    }
+
+    /* MOBILE BREAKPOINT (400px and below)
+       - Calendar cells with events show track IMAGES instead of text
+       - This creates a visual grid of track layouts */
+    @media (max-width: 400px) {
+        /* Hide text content in event cells */
+        #race-calendar .day-cell.has-event .day-number,
+        #race-calendar .day-cell.has-event .event {
+            display: none;
+        }
+        
+        /* Show track circuit image instead */
+        #race-calendar .day-cell.has-event .day-cell-image {
+            display: block;
+        }
+        
+        /* Smaller text for non-event cells */
+        #race-calendar .day-number {
+            font-size: 0.75rem;
+        }
+        
+        #race-calendar .event {
+            font-size: 0.5rem;
+        }
+    }
+
+    /* DESKTOP BREAKPOINT (400px and above)
+       - Popup buttons display side-by-side */
+    @media (min-width: 400px) {
+        #race-calendar .popup-buttons {
+            flex-direction: row; /* Not now | Yes side by side */
+        }
+    }
+
+    /* LANDSCAPE MODE WITH LIMITED HEIGHT
+       - Compact layout for landscape mobile devices */
+    @media (orientation: landscape) and (max-height: 600px) {
+        #race-calendar .calendar-header {
+            margin-bottom: 10px;
+        }
+        
+        #race-calendar .calendar-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        #race-calendar .day-header {
+            padding: 6px;
+        }
+    }
+</style>
+
+<!-- ============================================================================
+     HTML STRUCTURE
+     ============================================================================
+     Main container wraps all calendar components.
+     ID "race-calendar" is used for CSS scoping and JavaScript targeting.
+-->
+<div id="race-calendar">
+    
+    <!-- CALENDAR HEADER: Navigation and month title -->
+    <div class="calendar-header">
+        <button class="nav-button" id="prevBtn">←</button>
+        <h2 id="monthYear">January 2026</h2>
+        <button class="nav-button" id="nextBtn">→</button>
+    </div>
+
+    <!-- CALENDAR GRID: Days of week headers + day cells -->
+    <div class="calendar-grid" id="calendarGrid">
+        <!-- Generated dynamically by JavaScript -->
+    </div>
+
+    <!-- EVENTS LIST: Shows events visible in current calendar view -->
+    <div class="upcoming-events">
+        <div class="events-list" id="eventsList">
+            <!-- Generated dynamically by JavaScript -->
+        </div>
+    </div>
+
+    <!-- POPUP MODAL: Booking confirmation dialog -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <h3>Book Transportation?</h3>
+            <p id="popupMessage">Would you like to book transportation for your motorcycle?</p>
+            <div class="popup-buttons">
+                <button class="popup-button secondary" id="notNowButton">Not now</button>
+                <button class="popup-button primary" id="yesButton">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * =========================================================================
+     * MOTORCYCLE TRACK DAY CALENDAR - JAVASCRIPT
+     * =========================================================================
+     * 
+     * This script handles all calendar functionality:
+     * - Rendering the calendar grid for any month
+     * - Displaying events in calendar cells
+     * - Rendering the events list below the calendar
+     * - Handling the booking popup modal
+     * - Month navigation
+     * 
+     * The code is wrapped in an IIFE (Immediately Invoked Function Expression)
+     * to avoid polluting the global namespace.
+     */
+    (function() {
+        
+        /* =====================================================================
+           DATA OBJECTS
+           ===================================================================== 
+           These objects store all the event data and configuration.
+           To add/remove/modify events, edit the 'events' object below.
+        */
+
+        /**
+         * EVENTS DATA
+         * Key: Date string in 'YYYY-MM-DD' format
+         * Value: Object with 'track' (track name) and 'organizer' (event organizer)
+         * 
+         * To add a new event:
+         *   '2026-MM-DD': {track: 'Track Name', organizer: 'Organizer Name'},
+         */
+        const events = {
+            '2026-02-28': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
+            '2026-03-01': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
+            '2026-03-23': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
+            '2026-03-30': {track: 'Sonoma Raceway', organizer: "Carter's @ the track"},
+            '2026-04-04': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere'},
+            '2026-04-05': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere'},
+            '2026-04-13': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
+            '2026-04-18': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-04-19': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-04-20': {track: 'Sonoma Raceway', organizer: 'Fun Track Dayz'},
+            '2026-05-02': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-05-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-05-08': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-05-11': {track: 'Sonoma Raceway', organizer: 'Z2'},
+            '2026-05-18': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere'},
+            '2026-05-23': {track: 'Thunderhill Raceway West', organizer: 'Z2'},
+            '2026-05-24': {track: 'Thunderhill Raceway West', organizer: 'Z2'},
+            '2026-06-01': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track"},
+            '2026-06-15': {track: 'Sonoma Raceway', organizer: 'Z2'},
+            '2026-06-20': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz'},
+            '2026-06-21': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz'},
+            '2026-06-27': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
+            '2026-06-28': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
+            '2026-07-05': {track: 'Laguna Seca Raceway', organizer: 'Volant Vivere'},
+            '2026-07-18': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
+            '2026-07-19': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
+            '2026-08-04': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere'},
+            '2026-08-05': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere'},
+            '2026-08-22': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
+            '2026-08-23': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
+            '2026-08-24': {track: 'Sonoma Raceway', organizer: 'Z2'},
+            '2026-08-25': {track: 'Sonoma Raceway', organizer: 'Z2'},
+            '2026-08-31': {track: 'Sonoma Raceway', organizer: "Carter's @ the track"},
+            '2026-09-14': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-09-15': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-09-19': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-09-20': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-09-21': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track"},
+            '2026-09-24': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere'},
+            '2026-09-25': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-10-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-10-04': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
+            '2026-10-05': {track: 'Sonoma Raceway', organizer: 'Z2'},
+            '2026-10-10': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-10-11': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
+            '2026-10-24': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
+            '2026-10-25': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
+            '2026-10-31': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach'},
+            '2026-11-01': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach'}
+        };
+
+        /**
+         * TRACK BOOKING URLS
+         * Maps track names to their booking page URLs.
+         * Used by both the popup "Yes" button and the event list "Book" buttons.
+         */
+        const trackUrls = {
+            'Laguna Seca Raceway': 'https://www.31cats.com/services/p/laguna-seca-raceway',
+            'Thunderhill Raceway East': 'https://www.31cats.com/services/p/thunderhill-raceway',
+            'Thunderhill Raceway West': 'https://www.31cats.com/services/p/thunderhill-raceway',
+            'Sonoma Raceway': 'https://www.31cats.com/services/p/sonoma-raceway',
+            'The Ridge Motorsports': 'https://www.31cats.com/services/p/the-ridge-motorsports-motorcycle-trackday',
+            'Buttonwillow Raceway': 'https://www.31cats.com/services/p/buttonwillow-raceway-park',
+            'Utah Motorsports Campus': 'https://www.31cats.com/services/p/the-ridge-motorsports-motorcycle-trackday'
+        };
+
+        /**
+         * TRACK CIRCUIT IMAGES
+         * Maps track names to their circuit layout thumbnail images.
+         * Images are hosted on Squarespace CDN.
+         * Used in: event list thumbnails, mobile calendar cells
+         */
+        const trackImages = {
+            'Laguna Seca Raceway': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/0b1e6d7a-67d4-4838-a791-1eabbe620baf/Laguna+Seca+Raceway+Thumbnail.png?content-type=image%2Fpng',
+            'Sonoma Raceway': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/9c04b52b-e682-45c7-982c-570785d17396/Sonoma+Raceway+Thumbnail.png?content-type=image%2Fpng',
+            'The Ridge Motorsports': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/d526a8d8-85c8-4d75-98d8-f64d9d47b286/The+Ridge+Motorsports.png?content-type=image%2Fpng',
+            'Thunderhill Raceway West': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/6aab0b01-5963-4b18-9ce3-eb7ac5cdaceb/Thunderhill+West.png?content-type=image%2Fpng',
+            'Buttonwillow Raceway': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/447077f2-06c8-47bd-b34d-083005569b9c/Buttonwillow+the+circuit.png?content-type=image%2Fpng',
+            'Thunderhill Raceway East': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/c5467149-e3f0-472f-a576-05f4ee9f3776/Thunderhill+East+Thumbnail.png?content-type=image%2Fpng',
+            'Utah Motorsports Campus': 'https://images.squarespace-cdn.com/content/679436cda8116c7e81c35e0b/d526a8d8-85c8-4d75-98d8-f64d9d47b286/The+Ridge+Motorsports.png?content-type=image%2Fpng'
+        };
+
+        /**
+         * TRACK NAME ABBREVIATIONS
+         * Short versions of track names for display in calendar cells (desktop view).
+         * Keeps the calendar grid compact and readable.
+         */
+        const trackAbbreviations = {
+            'Thunderhill Raceway East': 'Thill East',
+            'Thunderhill Raceway West': 'Thill West',
+            'Sonoma Raceway': 'Sonoma',
+            'Buttonwillow Raceway': 'Btnwillow',
+            'Laguna Seca Raceway': 'Laguna',
+            'Utah Motorsports Campus': 'Utah',
+            'The Ridge Motorsports': 'Ridge'
+        };
+
+        /**
+         * ORGANIZER NAME ABBREVIATIONS
+         * Short versions of organizer names for display in calendar cells.
+         */
+        const organizerAbbreviations = {
+            "Carter's @ the track": "Carter's",
+            'Volant Vivere': 'VV',
+            'Z2': 'Z2',
+            'SuperBike Coach': 'SBKCoach',
+            'Fun Track Dayz': 'FTD'
+        };
+
+        /* =====================================================================
+           STATE VARIABLES
+           ===================================================================== */
+        
+        // Currently selected event (for popup)
+        let selectedTrack = null;
+        let selectedOrganizer = null;
+
+        // Today's date (for highlighting current day)
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentMonthIndex = today.getMonth();
+        const currentYearValue = today.getFullYear();
+
+        // Currently displayed month/year (user can navigate)
+        let currentMonth = currentMonthIndex;
+        let currentYear = currentYearValue;
+
+        /* =====================================================================
+           HELPER FUNCTIONS
+           ===================================================================== */
+
+        /**
+         * Get the number of days in a given month.
+         * @param {number} month - Month index (0-11)
+         * @param {number} year - Full year (e.g., 2026)
+         * @returns {number} Number of days in the month
+         */
+        function getDaysInMonth(month, year) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        /**
+         * Get the day of week for the first day of a month.
+         * @param {number} month - Month index (0-11)
+         * @param {number} year - Full year (e.g., 2026)
+         * @returns {number} Day of week (0=Sunday, 1=Monday, etc.)
+         */
+        function getFirstDayOfMonth(month, year) {
+            return new Date(year, month, 1).getDay();
+        }
+
+        /**
+         * Navigate calendar back to the current month.
+         * Called when user clicks on the month title.
+         */
+        function goToCurrentMonth() {
+            currentMonth = currentMonthIndex;
+            currentYear = currentYearValue;
+            renderCalendar();
+        }
+
+        /**
+         * Format a date range for display in the events list.
+         * Examples:
+         *   Single day: "March 23, 2026"
+         *   Same month: "March 1 - 2, 2026"
+         *   Different months: "February 28 - March 1, 2026"
+         * 
+         * @param {string[]} dates - Array of date strings ('YYYY-MM-DD')
+         * @returns {string} Formatted date range string
+         */
+        function formatDateRange(dates) {
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            
+            // Single day event
+            if (dates.length === 1) {
+                const d = new Date(dates[0] + 'T00:00:00');
+                return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+            }
+            
+            // Multi-day event
+            const first = new Date(dates[0] + 'T00:00:00');
+            const last = new Date(dates[dates.length - 1] + 'T00:00:00');
+            
+            if (first.getMonth() === last.getMonth()) {
+                // Same month: "March 1 - 2, 2026"
+                return `${monthNames[first.getMonth()]} ${first.getDate()} - ${last.getDate()}, ${first.getFullYear()}`;
+            } else {
+                // Different months: "February 28 - March 1, 2026"
+                return `${monthNames[first.getMonth()]} ${first.getDate()} - ${monthNames[last.getMonth()]} ${last.getDate()}, ${first.getFullYear()}`;
+            }
+        }
+
+        /**
+         * Check if two dates are consecutive (one day apart).
+         * Used to group multi-day events together.
+         * 
+         * @param {string} date1 - First date ('YYYY-MM-DD')
+         * @param {string} date2 - Second date ('YYYY-MM-DD')
+         * @returns {boolean} True if date2 is exactly one day after date1
+         */
+        function isConsecutiveDay(date1, date2) {
+            const d1 = new Date(date1 + 'T00:00:00');
+            const d2 = new Date(date2 + 'T00:00:00');
+            const diffTime = d2 - d1;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            return diffDays === 1;
+        }
+
+        /**
+         * Get all events visible in the current calendar view.
+         * Groups consecutive days with the same track/organizer into single events.
+         * Includes events from previous/next months that appear in the grid.
+         * 
+         * @param {number} month - Month index (0-11)
+         * @param {number} year - Full year
+         * @returns {Object[]} Array of event objects with dates, track, organizer
+         */
+        function getEventsForMonth(month, year) {
+            const monthEvents = [];
+            const monthStr = String(month + 1).padStart(2, '0');
+            
+            // Calculate calendar grid dimensions
+            const daysInMonth = getDaysInMonth(month, year);
+            let firstDay = getFirstDayOfMonth(month, year);
+            firstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust for Monday start
+            
+            // Previous month details
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevMonthYear = month === 0 ? year - 1 : year;
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevMonthYear);
+            
+            // Collect all dates visible in the calendar grid
+            const datesToCheck = [];
+            
+            // Previous month's visible days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const dateStr = `${prevMonthYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                datesToCheck.push(dateStr);
+            }
+            
+            // Current month's days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${monthStr}-${String(day).padStart(2, '0')}`;
+                datesToCheck.push(dateStr);
+            }
+            
+            // Next month's visible days
+            const totalCells = firstDay + daysInMonth;
+            const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            const nextMonth = month === 11 ? 0 : month + 1;
+            const nextMonthYear = month === 11 ? year + 1 : year;
+            
+            for (let day = 1; day <= remainingCells; day++) {
+                const dateStr = `${nextMonthYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                datesToCheck.push(dateStr);
+            }
+            
+            // Group consecutive days with same track and organizer
+            const groupedEvents = [];
+            let currentGroup = null;
+            
+            datesToCheck.forEach(dateStr => {
+                if (events[dateStr]) {
+                    const event = events[dateStr];
+                    
+                    // Check if this event can be grouped with the previous one
+                    if (currentGroup && 
+                        currentGroup.track === event.track && 
+                        currentGroup.organizer === event.organizer &&
+                        isConsecutiveDay(currentGroup.dates[currentGroup.dates.length - 1], dateStr)) {
+                        // Add to existing group
+                        currentGroup.dates.push(dateStr);
+                    } else {
+                        // Save previous group and start new one
+                        if (currentGroup) {
+                            groupedEvents.push(currentGroup);
+                        }
+                        currentGroup = {
+                            track: event.track,
+                            organizer: event.organizer,
+                            dates: [dateStr]
+                        };
+                    }
+                } else {
+                    // No event on this day - save current group if exists
+                    if (currentGroup) {
+                        groupedEvents.push(currentGroup);
+                        currentGroup = null;
+                    }
+                }
+            });
+            
+            // Don't forget the last group
+            if (currentGroup) {
+                groupedEvents.push(currentGroup);
+            }
+            
+            return groupedEvents;
+        }
+
+        /* =====================================================================
+           RENDER FUNCTIONS
+           ===================================================================== */
+
+        /**
+         * Render the events list below the calendar.
+         * Shows all events visible in the current calendar view.
+         * Each event displays: thumbnail, date range, track name, organizer, book button.
+         */
+        function renderEventsList() {
+            const eventsList = document.getElementById('eventsList');
+            eventsList.innerHTML = '';
+            
+            const monthEvents = getEventsForMonth(currentMonth, currentYear);
+            
+            // Show message if no events
+            if (monthEvents.length === 0) {
+                const noEvents = document.createElement('div');
+                noEvents.className = 'no-events';
+                noEvents.textContent = 'No events scheduled for this month';
+                eventsList.appendChild(noEvents);
+                return;
+            }
+            
+            // Create event items
+            monthEvents.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                
+                // Track circuit thumbnail image
+                const thumbnail = document.createElement('img');
+                thumbnail.className = 'event-thumbnail';
+                thumbnail.src = trackImages[event.track] || '';
+                thumbnail.alt = event.track + ' circuit layout';
+                eventItem.appendChild(thumbnail);
+                
+                // Event details container
+                const details = document.createElement('div');
+                details.className = 'event-details';
+                
+                // Date range
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'event-date';
+                dateDiv.textContent = formatDateRange(event.dates);
+                
+                // Track name
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'event-track';
+                trackDiv.textContent = event.track;
+                
+                // Organizer name
+                const organizerDiv = document.createElement('div');
+                organizerDiv.className = 'event-organizer';
+                organizerDiv.textContent = event.organizer;
+                
+                details.appendChild(dateDiv);
+                details.appendChild(trackDiv);
+                details.appendChild(organizerDiv);
+                eventItem.appendChild(details);
+                
+                // Book button - navigates directly to booking page
+                const bookBtn = document.createElement('button');
+                bookBtn.className = 'event-book-btn';
+                bookBtn.textContent = 'Book';
+                bookBtn.addEventListener('click', () => {
+                    if (trackUrls[event.track]) {
+                        window.location.href = trackUrls[event.track];
+                    }
+                });
+                eventItem.appendChild(bookBtn);
+                
+                eventsList.appendChild(eventItem);
+            });
+        }
+
+        /**
+         * Render the calendar grid for the current month.
+         * Creates day headers and day cells, including overflow from adjacent months.
+         * Also triggers renderEventsList() to update the events below.
+         */
+        function renderCalendar() {
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            
+            // Update month title
+            document.getElementById('monthYear').textContent = monthNames[currentMonth];
+            
+            // Enable/disable navigation buttons at calendar boundaries
+            document.getElementById('prevBtn').disabled = (currentMonth === 0 && currentYear === 2026);
+            document.getElementById('nextBtn').disabled = (currentMonth === 11 && currentYear === 2026);
+            
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            // Create day of week headers (Monday-Sunday)
+            const days = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Calculate grid layout
+            const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+            let firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+            firstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust: 0=Monday instead of Sunday
+            
+            // Previous month details for overflow days
+            const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+            const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevMonthYear);
+            
+            // ----- PREVIOUS MONTH OVERFLOW DAYS -----
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const cell = document.createElement('div');
+                cell.className = 'day-cell other-month';
+                
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                cell.appendChild(dayNumber);
+                
+                // Check for events on this day
+                const dateStr = `${prevMonthYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (events[dateStr]) {
+                    cell.classList.add('has-event');
+                    cell.addEventListener('click', () => openPopup(events[dateStr].track, events[dateStr].organizer));
+                    
+                    // Track name (abbreviated)
+                    const trackDiv = document.createElement('div');
+                    trackDiv.className = 'event';
+                    trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
+                    cell.appendChild(trackDiv);
+                    
+                    // Organizer name (abbreviated)
+                    const organizerDiv = document.createElement('div');
+                    organizerDiv.className = 'event organizer';
+                    organizerDiv.textContent = organizerAbbreviations[events[dateStr].organizer] || events[dateStr].organizer;
+                    cell.appendChild(organizerDiv);
+                    
+                    // Track circuit image (shown on mobile instead of text)
+                    const trackImg = document.createElement('img');
+                    trackImg.className = 'day-cell-image';
+                    trackImg.src = trackImages[events[dateStr].track] || '';
+                    trackImg.alt = events[dateStr].track;
+                    cell.appendChild(trackImg);
+                }
+                
+                grid.appendChild(cell);
+            }
+            
+            // ----- CURRENT MONTH DAYS -----
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                // Highlight today's date
+                if (day === currentDay && currentMonth === currentMonthIndex && currentYear === currentYearValue) {
+                    cell.classList.add('today');
+                }
+                
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                cell.appendChild(dayNumber);
+                
+                // Check for events on this day
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (events[dateStr]) {
+                    cell.classList.add('has-event');
+                    cell.addEventListener('click', () => openPopup(events[dateStr].track, events[dateStr].organizer));
+                    
+                    // Track name (abbreviated)
+                    const trackDiv = document.createElement('div');
+                    trackDiv.className = 'event';
+                    trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
+                    cell.appendChild(trackDiv);
+                    
+                    // Organizer name (abbreviated)
+                    const organizerDiv = document.createElement('div');
+                    organizerDiv.className = 'event organizer';
+                    organizerDiv.textContent = organizerAbbreviations[events[dateStr].organizer] || events[dateStr].organizer;
+                    cell.appendChild(organizerDiv);
+                    
+                    // Track circuit image (shown on mobile instead of text)
+                    const trackImg = document.createElement('img');
+                    trackImg.className = 'day-cell-image';
+                    trackImg.src = trackImages[events[dateStr].track] || '';
+                    trackImg.alt = events[dateStr].track;
+                    cell.appendChild(trackImg);
+                }
+                
+                grid.appendChild(cell);
+            }
+            
+            // ----- NEXT MONTH OVERFLOW DAYS -----
+            const totalCells = firstDay + daysInMonth;
+            const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            
+            const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+            const nextMonthYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+            
+            for (let day = 1; day <= remainingCells; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell other-month';
+                
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                cell.appendChild(dayNumber);
+                
+                // Check for events on this day
+                const dateStr = `${nextMonthYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (events[dateStr]) {
+                    cell.classList.add('has-event');
+                    cell.addEventListener('click', () => openPopup(events[dateStr].track, events[dateStr].organizer));
+                    
+                    // Track name (abbreviated)
+                    const trackDiv = document.createElement('div');
+                    trackDiv.className = 'event';
+                    trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
+                    cell.appendChild(trackDiv);
+                    
+                    // Organizer name (abbreviated)
+                    const organizerDiv = document.createElement('div');
+                    organizerDiv.className = 'event organizer';
+                    organizerDiv.textContent = organizerAbbreviations[events[dateStr].organizer] || events[dateStr].organizer;
+                    cell.appendChild(organizerDiv);
+                    
+                    // Track circuit image (shown on mobile instead of text)
+                    const trackImg = document.createElement('img');
+                    trackImg.className = 'day-cell-image';
+                    trackImg.src = trackImages[events[dateStr].track] || '';
+                    trackImg.alt = events[dateStr].track;
+                    cell.appendChild(trackImg);
+                }
+                
+                grid.appendChild(cell);
+            }
+
+            // Update the events list below the calendar
+            renderEventsList();
+        }
+
+        /* =====================================================================
+           POPUP FUNCTIONS
+           ===================================================================== */
+
+        /**
+         * Open the booking confirmation popup.
+         * Called when user clicks on a day cell with an event.
+         * 
+         * @param {string} trackName - Full track name
+         * @param {string} organizerName - Full organizer name
+         */
+        function openPopup(trackName, organizerName) {
+            selectedTrack = trackName;
+            selectedOrganizer = organizerName;
+            const message = `Would you like to book transportation for your motorcycle to ${trackName} with ${organizerName}?`;
+            document.getElementById('popupMessage').textContent = message;
+            document.getElementById('popupOverlay').classList.add('active');
+        }
+
+        /**
+         * Close the booking popup.
+         * Called when user clicks "Not now" or clicks outside the popup.
+         */
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('active');
+            selectedTrack = null;
+            selectedOrganizer = null;
+        }
+
+        /**
+         * Handle "Yes" button click in the popup.
+         * Navigates to the track's booking page.
+         */
+        function bookTransportation() {
+            if (selectedTrack && trackUrls[selectedTrack]) {
+                window.location.href = trackUrls[selectedTrack];
+            }
+            closePopup();
+        }
+
+        /* =====================================================================
+           NAVIGATION FUNCTION
+           ===================================================================== */
+
+        /**
+         * Change the displayed month by a given delta.
+         * Handles year rollover and enforces 2026 boundaries.
+         * 
+         * @param {number} delta - Number of months to move (+1 or -1)
+         */
+        function changeMonth(delta) {
+            currentMonth += delta;
+            
+            // Handle year rollover
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            
+            // Enforce 2026 boundaries (calendar only shows 2026)
+            if (currentYear < 2026) {
+                currentYear = 2026;
+                currentMonth = 0;
+            } else if (currentYear > 2026) {
+                currentYear = 2026;
+                currentMonth = 11;
+            }
+            
+            renderCalendar();
+        }
+
+        /* =====================================================================
+           EVENT LISTENERS
+           ===================================================================== */
+
+        // Navigation buttons
+        document.getElementById('prevBtn').addEventListener('click', () => changeMonth(-1));
+        document.getElementById('nextBtn').addEventListener('click', () => changeMonth(1));
+        
+        // Month title click - return to current month
+        document.getElementById('monthYear').addEventListener('click', goToCurrentMonth);
+        
+        // Popup buttons
+        document.getElementById('yesButton').addEventListener('click', bookTransportation);
+        document.getElementById('notNowButton').addEventListener('click', closePopup);
+        
+        // Close popup when clicking outside the content box
+        document.getElementById('popupOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'popupOverlay') {
+                closePopup();
+            }
+        });
+
+        /* =====================================================================
+           INITIALIZATION
+           ===================================================================== */
+        
+        // Render the calendar on page load
+        renderCalendar();
+        
+    })(); // End of IIFE
+</script>
