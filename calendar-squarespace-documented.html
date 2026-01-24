@@ -10,7 +10,7 @@ DESCRIPTION:
 
 AUTHOR: Jorge Luis Maya, mayaibuki.com
 LAST UPDATED: January 23, 2026
-VERSION: 2.3
+VERSION: 2.4
 
 ================================================================================
 SQUARESPACE EMBEDDING INSTRUCTIONS:
@@ -84,7 +84,10 @@ FILE STRUCTURE:
         width: 100%;
         max-width: 1400px;
         margin: 0 auto;
-        padding: clamp(10px, 2vw, 40px); /* Responsive padding: min 10px, scales with viewport, max 40px */
+        padding-top: clamp(10px, 2vw, 40px);
+        padding-bottom: clamp(10px, 2vw, 40px);
+        padding-left: 0;
+        padding-right: 0;
     }
 
     /* ==========================================================================
@@ -274,7 +277,7 @@ FILE STRUCTURE:
        EVENTS LIST SECTION STYLES
        ========================================================================== 
        List of upcoming events shown below the calendar grid.
-       Each event shows: thumbnail | date, track, organizer | Book button
+       Each event shows: thumbnail | date, track, organizer | View button
     */
     #race-calendar .upcoming-events {
         margin-top: clamp(30px, 5vh, 60px);
@@ -371,7 +374,7 @@ FILE STRUCTURE:
        POPUP MODAL STYLES
        ========================================================================== 
        Modal dialog that appears when clicking on an event day.
-       Asks user if they want to book transportation.
+       Asks user if they want to view transportation.
     */
     
     /* Dark overlay behind the popup */
@@ -404,7 +407,7 @@ FILE STRUCTURE:
         text-align: center;
     }
 
-    /* Popup title "Book Transportation?" */
+    /* Popup title "View Transportation?" */
     #race-calendar .popup-content h3 {
         font-family: 'Epilogue', sans-serif;
         font-size: clamp(1.2rem, 4vw, 1.8rem);
@@ -569,9 +572,9 @@ FILE STRUCTURE:
     
     <!-- CALENDAR HEADER: Navigation and month title -->
     <div class="calendar-header">
-        <button class="nav-button" id="prevBtn">←</button>
+        <button class="nav-button" id="prevBtn">&larr;</button>
         <h2 id="monthYear">January 2026</h2>
-        <button class="nav-button" id="nextBtn">→</button>
+        <button class="nav-button" id="nextBtn">&rarr;</button>
     </div>
 
     <!-- CALENDAR GRID: Days of week headers + day cells -->
@@ -589,8 +592,8 @@ FILE STRUCTURE:
     <!-- POPUP MODAL: Booking confirmation dialog -->
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
-            <h3>Book Transportation?</h3>
-            <p id="popupMessage">Would you like to book transportation for your motorcycle?</p>
+            <h3>View Transportation?</h3>
+            <p id="popupMessage">Would you like to view transportation for your motorcycle?</p>
             <div class="popup-buttons">
                 <button class="popup-button secondary" id="notNowButton">Not now</button>
                 <button class="popup-button primary" id="yesButton">Yes</button>
@@ -999,7 +1002,7 @@ FILE STRUCTURE:
                 // Book button - navigates directly to booking page
                 const bookBtn = document.createElement('button');
                 bookBtn.className = 'event-book-btn';
-                bookBtn.textContent = 'Book';
+                bookBtn.textContent = 'View';
                 bookBtn.addEventListener('click', () => {
                     if (trackUrls[event.track]) {
                         window.location.href = trackUrls[event.track];
@@ -1190,7 +1193,7 @@ FILE STRUCTURE:
            ===================================================================== */
 
         /**
-         * Open the booking confirmation popup.
+         * Open the viewing confirmation popup.
          * Called when user clicks on a day cell with an event.
          * 
          * @param {string} trackName - Full track name
@@ -1199,13 +1202,13 @@ FILE STRUCTURE:
         function openPopup(trackName, organizerName) {
             selectedTrack = trackName;
             selectedOrganizer = organizerName;
-            const message = `Would you like to book transportation for your motorcycle to ${trackName} with ${organizerName}?`;
+            const message = `Would you like to view transportation for your motorcycle to ${trackName} with ${organizerName}?`;
             document.getElementById('popupMessage').textContent = message;
             document.getElementById('popupOverlay').classList.add('active');
         }
 
         /**
-         * Close the booking popup.
+         * Close the viewing popup.
          * Called when user clicks "Not now" or clicks outside the popup.
          */
         function closePopup() {
