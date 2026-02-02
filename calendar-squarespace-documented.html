@@ -9,8 +9,8 @@ DESCRIPTION:
     Clicking on event days opens a booking popup modal.
 
 AUTHOR: Jorge Luis Maya, mayaibuki.com
-LAST UPDATED: January 23, 2026
-VERSION: 2.5
+LAST UPDATED: February 1, 2026
+VERSION: 2.6
 
 ================================================================================
 SQUARESPACE EMBEDDING INSTRUCTIONS:
@@ -245,7 +245,7 @@ FILE STRUCTURE:
         font-weight: 600;
     }
 
-    /* Event text (track name, organizer) in day cells */
+    /* Event text (track name, organizer, price) in day cells */
     #race-calendar .event {
         font-size: clamp(0.55rem, 1.2vw, 0.7rem);
         color: #1a1a1a;
@@ -339,7 +339,7 @@ FILE STRUCTURE:
         font-weight: 400;
     }
 
-    /* Book button - pill-shaped, black background */
+    /* View button - pill-shaped, black background */
     #race-calendar .event-book-btn {
         background: #1a1a1a;
         color: white;
@@ -630,61 +630,61 @@ FILE STRUCTURE:
         /**
          * EVENTS DATA
          * Key: Date string in 'YYYY-MM-DD' format
-         * Value: Object with 'track' (track name) and 'organizer' (event organizer)
+         * Value: Object with 'track' (track name), 'organizer' (event organizer), and 'price' (cost in dollars)
          * 
          * To add a new event:
-         *   '2026-MM-DD': {track: 'Track Name', organizer: 'Organizer Name'},
+         *   '2026-MM-DD': {track: 'Track Name', organizer: 'Organizer Name', price: 000},
          */
         const events = {
-            '2026-02-28': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
-            '2026-03-01': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
-            '2026-03-23': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
-            '2026-03-30': {track: 'Sonoma Raceway', organizer: "Carter's @ the track"},
-            '2026-04-04': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere'},
-            '2026-04-05': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere'},
-            '2026-04-13': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz'},
-            '2026-04-18': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-04-19': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-04-20': {track: 'Sonoma Raceway', organizer: 'Fun Track Dayz'},
-            '2026-05-02': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-05-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-05-08': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-05-11': {track: 'Sonoma Raceway', organizer: 'Z2'},
-            '2026-05-18': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere'},
-            '2026-05-23': {track: 'Thunderhill Raceway West', organizer: 'Z2'},
-            '2026-05-24': {track: 'Thunderhill Raceway West', organizer: 'Z2'},
-            '2026-06-01': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track"},
-            '2026-06-15': {track: 'Sonoma Raceway', organizer: 'Z2'},
-            '2026-06-20': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz'},
-            '2026-06-21': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz'},
-            '2026-06-27': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
-            '2026-06-28': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
-            '2026-07-05': {track: 'Laguna Seca Raceway', organizer: 'Volant Vivere'},
-            '2026-07-18': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
-            '2026-07-19': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
-            '2026-08-04': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere'},
-            '2026-08-05': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere'},
-            '2026-08-22': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
-            '2026-08-23': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track"},
-            '2026-08-24': {track: 'Sonoma Raceway', organizer: 'Z2'},
-            '2026-08-25': {track: 'Sonoma Raceway', organizer: 'Z2'},
-            '2026-08-31': {track: 'Sonoma Raceway', organizer: "Carter's @ the track"},
-            '2026-09-14': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-09-15': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-09-19': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-09-20': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-09-21': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track"},
-            '2026-09-24': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere'},
-            '2026-09-25': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-10-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-10-04': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz'},
-            '2026-10-05': {track: 'Sonoma Raceway', organizer: 'Z2'},
-            '2026-10-10': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-10-11': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track"},
-            '2026-10-24': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
-            '2026-10-25': {track: 'Thunderhill Raceway East', organizer: 'Z2'},
-            '2026-10-31': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach'},
-            '2026-11-01': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach'}
+            '2026-02-28': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz', price: 240},
+            '2026-03-01': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz', price: 240},
+            '2026-03-23': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz', price: 280},
+            '2026-03-30': {track: 'Sonoma Raceway', organizer: "Carter's @ the track", price: 260},
+            '2026-04-04': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere', price: 549},
+            '2026-04-05': {track: 'Buttonwillow Raceway', organizer: 'Volant Vivere', price: 549},
+            '2026-04-13': {track: 'Thunderhill Raceway East', organizer: 'Fun Track Dayz', price: 310},
+            '2026-04-18': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-04-19': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-04-20': {track: 'Sonoma Raceway', organizer: 'Fun Track Dayz', price: 260},
+            '2026-05-02': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 400},
+            '2026-05-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 400},
+            '2026-05-08': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-05-11': {track: 'Sonoma Raceway', organizer: 'Z2', price: 280},
+            '2026-05-18': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere', price: 390},
+            '2026-05-23': {track: 'Thunderhill Raceway West', organizer: 'Z2', price: 420},
+            '2026-05-24': {track: 'Thunderhill Raceway West', organizer: 'Z2', price: 420},
+            '2026-06-01': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track", price: 290},
+            '2026-06-15': {track: 'Sonoma Raceway', organizer: 'Z2', price: 280},
+            '2026-06-20': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz', price: 450},
+            '2026-06-21': {track: 'Buttonwillow Raceway', organizer: 'Fun Track Dayz', price: 450},
+            '2026-06-27': {track: 'Thunderhill Raceway East', organizer: 'Z2', price: 420},
+            '2026-06-28': {track: 'Thunderhill Raceway East', organizer: 'Z2', price: 420},
+            '2026-07-05': {track: 'Laguna Seca Raceway', organizer: 'Volant Vivere', price: 330},
+            '2026-07-18': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track", price: 280},
+            '2026-07-19': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track", price: 280},
+            '2026-08-04': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere', price: 649},
+            '2026-08-05': {track: 'The Ridge Motorsports', organizer: 'Volant Vivere', price: 649},
+            '2026-08-22': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track", price: 280},
+            '2026-08-23': {track: 'Thunderhill Raceway West', organizer: "Carter's @ the track", price: 280},
+            '2026-08-24': {track: 'Sonoma Raceway', organizer: 'Z2', price: 330},
+            '2026-08-25': {track: 'Sonoma Raceway', organizer: 'Z2', price: 330},
+            '2026-08-31': {track: 'Sonoma Raceway', organizer: "Carter's @ the track", price: 260},
+            '2026-09-14': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-09-15': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-09-19': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 420},
+            '2026-09-20': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 420},
+            '2026-09-21': {track: 'Laguna Seca Raceway', organizer: "Carter's @ the track", price: 290},
+            '2026-09-24': {track: 'Thunderhill Raceway East', organizer: 'Volant Vivere', price: 390},
+            '2026-09-25': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-10-03': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 420},
+            '2026-10-04': {track: 'Thunderhill Raceway West', organizer: 'Fun Track Dayz', price: 420},
+            '2026-10-05': {track: 'Sonoma Raceway', organizer: 'Z2', price: 280},
+            '2026-10-10': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-10-11': {track: 'Thunderhill Raceway East', organizer: "Carter's @ the track", price: 280},
+            '2026-10-24': {track: 'Thunderhill Raceway East', organizer: 'Z2', price: 420},
+            '2026-10-25': {track: 'Thunderhill Raceway East', organizer: 'Z2', price: 420},
+            '2026-10-31': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach', price: 220},
+            '2026-11-01': {track: 'Thunderhill Raceway West', organizer: 'SuperBike Coach', price: 220}
         };
 
         /**
@@ -919,6 +919,7 @@ FILE STRUCTURE:
                         currentGroup = {
                             track: event.track,
                             organizer: event.organizer,
+                            price: event.price,
                             dates: [dateStr]
                         };
                     }
@@ -989,17 +990,18 @@ FILE STRUCTURE:
                 trackDiv.className = 'event-track';
                 trackDiv.textContent = event.track;
                 
-                // Organizer name
+                // Price and Organizer (combined on one line: "$280 - Carter's @ the track")
                 const organizerDiv = document.createElement('div');
                 organizerDiv.className = 'event-organizer';
-                organizerDiv.textContent = event.organizer;
+                const priceText = event.price ? `$${event.price} - ` : '';
+                organizerDiv.textContent = priceText + event.organizer;
                 
                 details.appendChild(dateDiv);
                 details.appendChild(trackDiv);
                 details.appendChild(organizerDiv);
                 eventItem.appendChild(details);
                 
-                // Book button - navigates directly to booking page
+                // View button - navigates directly to booking page
                 const bookBtn = document.createElement('button');
                 bookBtn.className = 'event-book-btn';
                 bookBtn.textContent = 'View';
@@ -1076,6 +1078,12 @@ FILE STRUCTURE:
                     trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
                     cell.appendChild(trackDiv);
                     
+                    // Price
+                    const priceDiv = document.createElement('div');
+                    priceDiv.className = 'event price';
+                    priceDiv.textContent = events[dateStr].price ? `$${events[dateStr].price}` : '';
+                    cell.appendChild(priceDiv);
+                    
                     // Organizer name (abbreviated)
                     const organizerDiv = document.createElement('div');
                     organizerDiv.className = 'event organizer';
@@ -1120,6 +1128,12 @@ FILE STRUCTURE:
                     trackDiv.className = 'event';
                     trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
                     cell.appendChild(trackDiv);
+                    
+                    // Price
+                    const priceDiv = document.createElement('div');
+                    priceDiv.className = 'event price';
+                    priceDiv.textContent = events[dateStr].price ? `$${events[dateStr].price}` : '';
+                    cell.appendChild(priceDiv);
                     
                     // Organizer name (abbreviated)
                     const organizerDiv = document.createElement('div');
@@ -1166,6 +1180,12 @@ FILE STRUCTURE:
                     trackDiv.className = 'event';
                     trackDiv.textContent = trackAbbreviations[events[dateStr].track] || events[dateStr].track;
                     cell.appendChild(trackDiv);
+                    
+                    // Price
+                    const priceDiv = document.createElement('div');
+                    priceDiv.className = 'event price';
+                    priceDiv.textContent = events[dateStr].price ? `$${events[dateStr].price}` : '';
+                    cell.appendChild(priceDiv);
                     
                     // Organizer name (abbreviated)
                     const organizerDiv = document.createElement('div');
