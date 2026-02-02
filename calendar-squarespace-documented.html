@@ -33,7 +33,7 @@ RESPONSIVE BREAKPOINTS:
 
 - Desktop (> 768px): Full layout with text in calendar cells
 - Tablet (768px): Reduced padding and font sizes
-- Mobile (< 400px): Calendar cells show track images instead of text
+- Mobile (< 440px): Calendar cells show track images instead of text
 - Landscape mode (< 600px height): Compact header
 
 ================================================================================
@@ -82,7 +82,7 @@ FILE STRUCTURE:
     #race-calendar {
         font-family: 'Poppins', sans-serif;
         width: 100%;
-        max-width: 1400px;
+        max-width: 1440px;
         margin: 0 auto;
         padding-top: clamp(10px, 2vw, 40px);
         padding-bottom: clamp(10px, 2vw, 40px);
@@ -259,7 +259,7 @@ FILE STRUCTURE:
     /* ==========================================================================
        DAY CELL TRACK IMAGE (Mobile Only)
        ========================================================================== 
-       On mobile (< 400px), event cells show track circuit images instead of text.
+       On mobile (< 440px), event cells show track circuit images instead of text.
        Hidden by default, shown via media query.
     */
     #race-calendar .day-cell-image {
@@ -512,10 +512,10 @@ FILE STRUCTURE:
         }
     }
 
-    /* MOBILE BREAKPOINT (400px and below)
+    /* MOBILE BREAKPOINT (440px and below)
        - Calendar cells with events show track IMAGES instead of text
        - This creates a visual grid of track layouts */
-    @media (max-width: 400px) {
+    @media (max-width: 440px) {
         /* Hide text content in event cells */
         #race-calendar .day-cell.has-event .day-number,
         #race-calendar .day-cell.has-event .event {
@@ -537,9 +537,9 @@ FILE STRUCTURE:
         }
     }
 
-    /* DESKTOP BREAKPOINT (400px and above)
+    /* DESKTOP BREAKPOINT (440px and above)
        - Popup buttons display side-by-side */
-    @media (min-width: 400px) {
+    @media (min-width: 440px) {
         #race-calendar .popup-buttons {
             flex-direction: row; /* Not now | Yes side by side */
         }
